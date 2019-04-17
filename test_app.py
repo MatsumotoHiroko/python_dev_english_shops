@@ -49,6 +49,12 @@ class TestApp(unittest.TestCase):
         db_session.commit()
         return product    
 
+    def create_new_product_with_json(self, product_json):
+        product = Product(**product_json)
+        db_session.add(product)
+        db_session.commit()
+        return product      
+
     def test_shop_validate(self):
        v = Validator()
        self.assertFalse(v.validate({'name1': 'aaa'}, app.shop_schema))
@@ -95,6 +101,36 @@ class TestApp(unittest.TestCase):
         response_products_titles = [d.get('title') for d in response_data]
         for product in products:
             self.assertIn(product.title, response_products_titles)
+
+    def test_get_shop_linked_imaged_products(self):
+        shop = self.create_new_shop()
+        shop_id = shop.id
+        product_json = self.build_product_json(shop_id)
+        self.create_new_product_with_json(product_json)
+        product2 = self.build_product_json(shop_id)
+        product2['link'] = None
+        self.create_new_product_with_json(product2)
+        product3 = self.build_product_json(shop_id)
+        product3['image_link'] = None
+        self.create_new_product_with_json(product3)
+        product4 = self.build_product_json(shop_id)
+        product4['link'] = None
+        product4['image_link'] = None
+        self.create_new_product_with_json(product4)
+        product5 = self.build_product_json(shop_id)
+        product5['link'] = ""
+        product5['image_link'] = ""
+        self.create_new_product_with_json(product5)
+        response = self.app.get('/shops/{}/linked_imaged_products'.format(shop_id), follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.get_data())
+        self.assertEqual(len(response_data), 1)
+        response_data = response_data[0]
+        self.assertEqual(product_json['title'], response_data['title'])
+        self.assertEqual(shop_id, response_data['shops_id'])
+        self.assertEqual(product_json['link'], response_data['link'])
+        self.assertEqual(product_json['description'], response_data['description'])
+        self.assertEqual(product_json['image_link'], response_data['image_link'])
 
     def test_post_shop_products(self):
         shop = self.create_new_shop()

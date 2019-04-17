@@ -65,14 +65,31 @@ def create_shop():
 
 @app.route('/shops/<int:id>/products', methods=['GET'])
 def get_shop_products(id):
+    result = logic_get_shop_products(id)
+    return jsonify(result), 200
+    
+@app.route('/shops/<int:id>/linked_imaged_products', methods=['GET'])
+def get_shop_linked_imaged_products(id):    
+    result = logic_get_shop_products(id, True)
+    return jsonify(result), 200
+
+def logic_get_shop_products(id, linked_imaged=False):
     shop = Shop.query.get(id)
     result = []
     if shop:
-        products = shop.products
+        products = []
+        if linked_imaged:
+            products = Product.query.filter(
+                Product.shops_id == id, 
+                Product.link.isnot(None), Product.link.isnot(''), 
+                Product.image_link.isnot(None), Product.image_link.isnot('')
+            )
+        else:
+            products = shop.products
         if products:
             result = [l.to_dict() for l in products]
-    return jsonify(result), 200
-
+    return result
+    
 @app.route('/shops/<int:id>/products', methods=['POST'])
 def create_shop_products(id):
     json = request.get_json()
