@@ -68,17 +68,18 @@ def create_shop():
 
 @app.route('/shops/<int:id>/products', methods=['GET'])
 def get_shop_products(id):
-    result = logic_get_shop_products(id)
-    return jsonify(result), 200
+    result, code = logic_get_shop_products(id)
+    return jsonify(result), code
 
 @app.route('/shops/<int:id>/linked_imaged_products', methods=['GET'])
 def get_shop_linked_imaged_products(id):    
-    result = logic_get_shop_products(id, True)
-    return jsonify(result), 200
+    result, code = logic_get_shop_products(id, True)
+    return jsonify(result), code
 
 def logic_get_shop_products(id, linked_imaged=False):
     shop = Shop.query.get(id)
     result = []
+    code = 200
     if shop:
         products = []
         if linked_imaged:
@@ -91,7 +92,10 @@ def logic_get_shop_products(id, linked_imaged=False):
             products = shop.products
         if products:
             result = [l.to_dict() for l in products]
-    return result
+    else:
+        result = {'message': 'invalid shops id'}
+        code = 400
+    return result, code
     
 @app.route('/shops/<int:id>/products', methods=['POST'])
 def create_shop_products(id):
