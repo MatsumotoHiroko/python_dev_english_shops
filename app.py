@@ -55,9 +55,12 @@ def all_shops():
 @app.route('/shops', methods=['POST'])
 def create_shop():
     json = request.get_json()
-    v = Validator()
-    if not v.validate(json, shop_schema):
-        return jsonify(v.errors), 400
+    if json:
+        v = Validator()
+        if not v.validate(json, shop_schema):
+            return jsonify(v.errors), 400
+    else:
+        return jsonify({'message': 'no json data'}), 400
     content = Shop(**json)
     db_session.add(content)
     db_session.commit()
@@ -67,7 +70,7 @@ def create_shop():
 def get_shop_products(id):
     result = logic_get_shop_products(id)
     return jsonify(result), 200
-    
+
 @app.route('/shops/<int:id>/linked_imaged_products', methods=['GET'])
 def get_shop_linked_imaged_products(id):    
     result = logic_get_shop_products(id, True)
@@ -93,9 +96,12 @@ def logic_get_shop_products(id, linked_imaged=False):
 @app.route('/shops/<int:id>/products', methods=['POST'])
 def create_shop_products(id):
     json = request.get_json()
-    v = Validator()
-    if not v.validate(json, product_schema):
-        return jsonify(v.errors), 400
+    if json:
+        v = Validator()
+        if not v.validate(json, product_schema):
+            return jsonify(v.errors), 400
+    else:
+        return jsonify({'message': 'no json data'}), 400
     shop = Shop.query.get(id)
     if not shop:
         return jsonify({'message': 'invalid shops id'}), 400
